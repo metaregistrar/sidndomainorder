@@ -22,6 +22,7 @@ Dit script kan worden gebruikt op elke machine waarop PHP 5.4 is geïnstalleerd.
 Let op: Zorg ervoor dat het IP adres dat je gebruikt is gewhitelist bij SIDN, anders werkt de EPP verbinding niet.
 
 Voor vragen of problemen neem gerust contact op met de firma Metaregistrar.
+Als u de EPP connectie die in dit script is opgenomen wilt gebruiken voor uw eigen software, klik dan hier: https://github.com/metaregistrar/php-epp-client
 
 sidndomainorder
 ===============
@@ -47,3 +48,4 @@ The script uses the following parameters:
  Please note that the IP address of the machine you are using must be whitelisted with SIDN to ensure proper EPP connection.
 
  If you experience problems or have questions, feel free to contact us: www.metaregistrar.com
+ If you want to use the EPP connection provided with this script for your own software solution, please check https://github.com/metaregistrar/php-epp-client
