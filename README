@@ -1,1 +1,41 @@
-This file was created by IntelliJ IDEA 12.1.6 for binding GitHub repository
+sidndomainorder
+===============
+
+(english version below)
+
+Dit script is gemaakt om klanten van SIDN te helpen om de facturatieperiode van hun portfolio van domeinnamen aan te passen
+
+Het script maakt gebruikt van het rapport dat elke maandag van de SIDN site te downloaden is: DOMAIN_ORDER_FREQUENCY.
+Dit rapport bevat alle domeinnamen in het portfolio met hun ordertermijnen.
+
+Het script heeft een aantal mogelijke parameters:
+ - sidndomainorder.php connect: Deze optie vraagt om username en password voor de EPP verbinding, en slaat die op in een ge-encrypt ini bestandje
+ - sidndomainorder.php analyze DOMAIN_ORDER_FREQUENCY.CSV: Deze optie leest het bestand DOMAIN_ORDER_FREQUENCY.CSV in en telt hoeveel domeinnamen op 3 maanden, hoeveel op 12 maanden en hoeveel op 1 maandsfacturatie staan.
+ - sidndomainorder.php set1month DOMAIN_ORDER_FREQUENCY.CSV: Deze optie stelt alle domeinnamen in het CSV bestand in op 1-maands facturatie.
+ - sidndomainorder.php set3month DOMAIN_ORDER_FREQUENCY.CSV: Deze optie stelt alle domeinnamen in het CSV bestand in op 3-maands facturatie.
+ - sidndomainorder.php set12month DOMAIN_ORDER_FREQUENCY.CSV: Deze optie stelt alle domeinnamen in het CSV bestand in op jaarfacturatie.
+
+Alle domeinnamen die al op 1, 3 of 12 maanden staan worden overgeslagen. Je kunt het script meerdere malen uitvoeren, de nieuwe orderperiode wordt dan telkens overschreven.
+Let op: het script slaat altijd de eerste twee regels van het CSV bestand over, omdat daar header informatie in staat.
+
+
+
+sidndomainorder
+===============
+
+
+This script was made to help SIDN customers to change invoicing period of their portfolio of domain names
+
+The script uses the reports DOMAIN_ORDER_FREQUENCY, that can be downloaded every monday from the SIDN website
+This report contains all the domain names in the portfolio along with their invoicing periods
+
+The script uses the following parameters:
+
+ - sidndomainorder.php connect: use this to test your EPP connection. Username and password are saved in an encrypted ini file.
+ - sidndomainorder.php analyze DOMAIN_ORDER_FREQUENCY.CSV: Reads the report DOMAIN_ORDER_FREQUENCY.CSV and counts how many domain names are on 1, 3 or 12-month order periods.
+ - sidndomainorder.php set1month DOMAIN_ORDER_FREQUENCY.CSV: Change order periods of all domain names in this file to 1-month invoicing.
+ - sidndomainorder.php set3month DOMAIN_ORDER_FREQUENCY.CSV: Change order periods of all domain names in this file to 3-month invoicing.
+ - sidndomainorder.php set12month DOMAIN_ORDER_FREQUENCY.CSV: Change order periods of all domain names in this file to 12-month invoicing.
+
+ All domain names in the specified report that are already on the specified invoicing period are skipped. You can run the script several times, the order period will be overwitten in that case.
+ Please note that the script always skips the first 2 lines of the SIDN report, because those lines contain header information
