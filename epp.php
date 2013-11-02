@@ -11,7 +11,8 @@ class epp
 
     public function __construct($username, $password)
     {
-        $this->conn = new sidnEppConnection($username, $password);
+        $useliveserver = true;
+        $this->conn = new sidnEppConnection($username, $password, $useliveserver);
     }
 
     public function connect()
