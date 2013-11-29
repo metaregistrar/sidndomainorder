@@ -2,6 +2,7 @@
 include_once("./crypt.php");
 include_once("./epp.php");
 
+error_reporting(E_ALL ^ E_NOTICE);
 date_default_timezone_set("UTC");
 if ($argc<3)
 {
@@ -183,6 +184,7 @@ function analyzefile($filename)
 {
     $frequencycount = array(3=>0,12=>0,1=>0);
     $toprocess = array();
+    $starts = array();
     $totalindex = 0;
     echo "Analyzing file $filename\n";
     $domains = file($filename, FILE_IGNORE_NEW_LINES);
@@ -194,7 +196,16 @@ function analyzefile($filename)
         if (($linenumber > 2) && (strlen($domain)>1))
         {
             list ($domainname, $startperiod, $frequency, $endperiod)= explode(';',$domain);
-            $toprocess[$domainname]=$frequency;
+            if (isset($toprocess[$domainname]))
+            {
+                $doubles[]=$domainname;
+            }
+            else
+            {
+                $toprocess[$domainname]=$frequency;
+                $startmonth = substr($startperiod,3,7);
+                $starts[$startmonth]++;
+            }
             $frequencycount[$frequency]++;
         }
     }
@@ -208,7 +219,16 @@ function analyzefile($filename)
     }
     if ($totalindex!=count($toprocess))
     {
-        echo "WARNING: Total uniqe domain names in this report (".count($toprocess).") differs from order periods reported ($totalindex). This means that some domain names are listed more then once in this report!\n";
+        echo "\n\nWARNING: Total uniqe domain names in this report (".count($toprocess).") differs from order periods reported ($totalindex).\nThis means that some domain names are listed more then once in this report. These domain names have stacked orders waiting\nDouble domain names:\n";
+        foreach ($doubles as $double)
+        {
+            echo '-> '.$double."\n";
+        }
+    }
+    echo "\n\nOverview of ordering periods\n";
+    foreach ($starts as $start=>$count)
+    {
+        echo "$count domain names will be invoiced in the first month following $start\n";
     }
 
 }
