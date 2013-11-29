@@ -11,7 +11,7 @@ Dit rapport bevat alle domeinnamen in het portfolio met hun ordertermijnen.
 Snelstart: Download het rapport DOMAIN_ORDER_FREQUENCY van de SIDN registrar website, en start het script met de volgende parameters:
 php sidndomainorder.php analyze DOMAIN_ORDER_FREQUENCYxxxxxx.CSV
 
-Hiermee start u een analyse van het bestand. De analyse geeft aan hoeveel domeinnamen op 1, 3 of 12-maands orderperiode staan, en in welke maanden u facturen kunt verwachten voor welke aantallen domeinnamen.
+Hiermee start u een analyse van het bestand. De analyse geeft aan hoeveel domeinnamen op 1, 3 of 12-maands orderperiode staan, en in welke maanden u facturen kunt verwachten voor welke aantallen domeinnamen en bedragen.
 Ook geeft het script de gestapelde orders weer.
 
 Het script heeft een aantal mogelijke parameters:
