@@ -274,6 +274,7 @@ function analyzefile($filename)
         if ($startyear == '2013')
         {
             $invoicedate = '01-01-2014';
+            $invoicedate = '20140101';
         }
         else
         {
@@ -288,15 +289,17 @@ function analyzefile($filename)
                 $startmonth= sprintf("%02d",$startmonth+1);
             }
             $invoicedate = '01-'.$startmonth.'-'.$startyear;
+            $invoicedate = $startyear.$startmonth.'01';
         }
         foreach ($count as $period=>$counter)
         {
             $invoice[$invoicedate][$period]+=$counter;
         }
     }
+    ksort($invoice);
     foreach ($invoice as $date=>$valuecount)
     {
-        echo "On $date the invoice will contain:\n";
+        echo "On ".substr($date,6,2).'-'.substr($date,4,2).'-'.substr($date,0,4)." the invoice will contain:\n";
         $grandtotal = 0;
         foreach ($valuecount as $period=>$counter)
         {
