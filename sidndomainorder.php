@@ -4,13 +4,12 @@ include_once("./epp.php");
 
 error_reporting(E_ALL ^ E_NOTICE);
 date_default_timezone_set("UTC");
-if ($argc<3)
+if ($argc<2)
 {
     die(usage());
 }
 else
 {
-
     switch($argv[1])
     {
         case 'connect':
@@ -20,11 +19,19 @@ else
             }
             break;
         case 'analyze':
+            if ($argc<3)
+            {
+                die(usage());
+            }
             // Analyze the DOMAIN_ORDER_FREQUENCY report from SIDN
             checkinput($argv[2]);
             analyzefile($argv[2]);
             break;
         case 'set1month':
+            if ($argc<3)
+            {
+                die(usage());
+            }
             // Set all domain names in the specified file to 1-month order frequency
             checkinput($argv[2]);
             if ($params = load_settings())
@@ -33,6 +40,10 @@ else
             }
             break;
         case 'set3month':
+            if ($argc<3)
+            {
+                die(usage());
+            }
             // Set all domain names in the specified file to 3-month order frequency
             checkinput($argv[2]);
             if ($params=load_settings())
@@ -41,6 +52,10 @@ else
             }
             break;
         case 'set12month':
+            if ($argc<3)
+            {
+                die(usage());
+            }
             // Set all domain names in the specified file to 12-month order frequency
             checkinput($argv[2]);
             if ($params=load_settings())
@@ -207,6 +222,7 @@ function analyzefile($filename)
             if (isset($toprocess[$domainname]))
             {
                 $doubles[]=$domainname;
+                echo "Double domain name alert: $domainname\n";
             }
             else
             {
@@ -218,7 +234,7 @@ function analyzefile($filename)
             // If the last variable is filled, this is a stacked order, these domain names appear twice in the report.
             if (strlen($nextperiod)>0)
             {
-                #echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
+                echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
                 $stacked++;
             }
             $frequencycount[$frequency]++;
@@ -236,18 +252,22 @@ function analyzefile($filename)
     echo "Found $stacked stacked order".($stacked>1?"s":"")."\n";
 
     // The total number of domain names in the list plus the stacked orders must match the total number of domain names found in the report
-    if ($totalindex!=count($toprocess)+$stacked)
+    $total = count($toprocess);
+    if ($totalindex!=$total)
     {
-        echo "\n\nWARNING: Total uniqe domain names in this report (".count($toprocess).") differs from order periods reported ($totalindex).\nThis means that some domain names are listed more then once in this report.\nDouble domain names:\n";
-        foreach ($doubles as $double)
+        echo "\n\nWARNING: Total uniqe domain names in this report ($total) differs from order periods reported ($totalindex).\nThis means that some domain names are listed more than once in this report.\nDouble domain names:\n";
+        if (is_array($doubles))
         {
-            echo '-> '.$double."\n";
+            foreach ($doubles as $double)
+            {
+                echo '-> '.$double."\n";
+            }
         }
     }
 
     // This list tries to show at what dates you can expect to receive an invoice for the domain names
     echo "\n\nOverview of ordering periods and invoices\n\n";
-    $invoices = array();
+    $invoice = array();
     foreach ($starts as $start=>$count)
     {
         $startyear = substr($start,3,4);
@@ -272,7 +292,6 @@ function analyzefile($filename)
         foreach ($count as $period=>$counter)
         {
             $invoice[$invoicedate][$period]+=$counter;
-
         }
     }
     foreach ($invoice as $date=>$valuecount)
