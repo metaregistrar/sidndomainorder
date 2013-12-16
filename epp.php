@@ -109,7 +109,7 @@ class epp
         if ((($response = $this->conn->writeandread($renew)) instanceof eppRenewResponse) && ($response->Success()))
         {
             /* @var $response eppRenewResponse */
-            echo $response->getResultMessage();
+            echo $response->getResultMessage()."\n";
             return true;
         }
     }
