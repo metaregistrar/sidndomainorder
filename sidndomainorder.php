@@ -220,7 +220,6 @@ function setorderperiods($filename, $period, $params)
                         catch (eppException $e)
                         {
                             echo "ERROR occurred: ".$e->getMessage()."\n";
-                            $epp->disconnect();
                         }
                     }
                 }
@@ -261,7 +260,6 @@ function setsimpleorderperiods($filename, $period, $params)
                 catch (eppException $e)
                 {
                     echo "ERROR occurred: ".$e->getMessage()."\n";
-                    $epp->disconnect();
                 }
             }
             $epp->disconnect();
