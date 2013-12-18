@@ -10,6 +10,22 @@ if ($argc<2)
 }
 else
 {
+    // Retrieve extra parameters from the arguments
+    $simplefile = false;
+    foreach ($argv as $arg)
+    {
+        if (substr($arg,0,2)=='--')
+        {
+            list($subarg,$param)=explode('=',$arg);
+            if ($subarg == '--file')
+            {
+                if ($param == 'simple')
+                {
+                    $simplefile = true;
+                }
+            }
+        }
+    }
     switch($argv[1])
     {
         case 'connect':
@@ -36,7 +52,15 @@ else
             checkinput($argv[2]);
             if ($params = load_settings())
             {
-                setorderperiods($argv[2],1, $params);
+                if ($simplefile)
+                {
+                    setsimpleorderperiods($argv[2],1, $params);
+                }
+                else
+                {
+                    setorderperiods($argv[2],1, $params);
+                }
+
             }
             break;
         case 'set3month':
@@ -48,7 +72,14 @@ else
             checkinput($argv[2]);
             if ($params=load_settings())
             {
-                setorderperiods($argv[2],3, $params);
+                if ($simplefile)
+                {
+                    setsimpleorderperiods($argv[2],3, $params);
+                }
+                else
+                {
+                    setorderperiods($argv[2],3, $params);
+                }
             }
             break;
         case 'set12month':
@@ -60,7 +91,15 @@ else
             checkinput($argv[2]);
             if ($params=load_settings())
             {
-                setorderperiods($argv[2],12, $params);
+                if ($simplefile)
+                {
+                    setsimpleorderperiods($argv[2],12, $params);
+                }
+                else
+                {
+                    setorderperiods($argv[2],12, $params);
+                }
+
             }
             break;
         default:
@@ -86,7 +125,7 @@ function checkinput($file)
 
 function usage()
 {
-    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php <analyze> <inputfile>\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php <set1month> <inputfile>\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php <set3month> <inputfile>\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php <set12month> <inputfile>\n       Reset all domain names in the report to 12-month order period\n\n";
+    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php <analyze> <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php <set1month> <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php <set3month> <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php <set12month> <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
 }
 
 function load_settings()
@@ -138,6 +177,8 @@ function load_settings()
         }
     }
 }
+
+
 
 function setorderperiods($filename, $period, $params)
 {
@@ -198,6 +239,47 @@ function setorderperiods($filename, $period, $params)
 
 
 }
+
+function setsimpleorderperiods($filename, $period, $params)
+{
+    echo "Connecting to SIDN EPP service\n";
+    if ($epp = new epp($params->username, $params->password))
+    {
+        if ($epp->connect())
+        {
+            $reportmonth = ($period==1?"month":"months");
+            echo "Setting order period to $period $reportmonth for al domain names in file $filename.\n";
+            $linenumber = 0;
+            $domains = file($filename, FILE_IGNORE_NEW_LINES);
+            foreach ($domains as $domainname)
+            {
+                echo "Setting new period of $period $reportmonth for domain name $domainname\n";
+                try
+                {
+                    $epp->setdomainperiod($domainname, $period);
+                }
+                catch (eppException $e)
+                {
+                    echo "ERROR occurred: ".$e->getMessage()."\n";
+                    $epp->disconnect();
+                }
+            }
+            $epp->disconnect();
+        }
+        else
+        {
+            echo "ERROR: Unable to connect to SIDN EPP service";
+        }
+    }
+    else
+    {
+        echo "ERROR: Unable to connect to EPP service\n";
+    }
+
+
+}
+
+
 
 function analyzefile($filename)
 {
