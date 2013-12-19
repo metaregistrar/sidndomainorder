@@ -75,10 +75,15 @@ class epp
                 $this->loggedin = true;
                 return true;
             }
+            else
+            {
+                echo "Login failed with message ".$response->getResultMessage()."\n";
+                return false;
+            }
         }
         catch (eppException $e)
         {
-            echo $e->getMessage()."\n";
+            echo "Login failed with message ".$e->getMessage()."\n";
             return false;
         }
     }
@@ -88,6 +93,7 @@ class epp
         try
         {
             $logout = new eppLogoutRequest();
+            echo $logout->saveXML();
             if ((($response = $this->conn->writeandread($logout)) instanceof eppLogoutResponse) && ($response->Success()))
             {
                 $this->loggedin = false;
@@ -101,7 +107,7 @@ class epp
         }
         catch (eppException $e)
         {
-            echo $e->getMessage()."\n";
+            echo "Logout failed with message ".$e->getMessage()."\n";
             return false;
         }
     }

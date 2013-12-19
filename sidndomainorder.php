@@ -210,7 +210,7 @@ function signal_handler($signal)
             print "Program aborted\n";
             if ($epp)
             {
-                echo "closing SIDN EPP connection\n";
+                echo "Closing SIDN EPP connection\n";
                 $epp->disconnect();
             }
             exit;
