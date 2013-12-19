@@ -8,10 +8,14 @@ include_once('EPP/sidnEppConnection.php');
 class epp
 {
     private $conn;
+    private $connected;
+    private $loggedin;
 
     public function __construct($username, $password)
     {
         $useliveserver = true;
+        $this->connected = false;
+        $this->loggedin = false;
         $this->conn = new sidnEppConnection($username, $password, $useliveserver);
     }
 
@@ -19,6 +23,7 @@ class epp
     {
         if ($this->conn->connect())
         {
+            $this->connected = true;
             if ($this->login())
             {
                 return true;
@@ -30,8 +35,16 @@ class epp
 
     public function disconnect()
     {
-        $this->logout();
-        $this->conn->disconnect();
+        if ($this->loggedin)
+        {
+            $this->logout();
+        }
+        if ($this->connected)
+        {
+            $this->conn->disconnect();
+            $this->connected = false;
+        }
+
     }
 
     public function testconnection()
@@ -59,6 +72,7 @@ class epp
             $login = new eppLoginRequest();
             if ((($response = $this->conn->writeandread($login)) instanceof eppLoginResponse) && ($response->Success()))
             {
+                $this->loggedin = true;
                 return true;
             }
         }
@@ -76,6 +90,7 @@ class epp
             $logout = new eppLogoutRequest();
             if ((($response = $this->conn->writeandread($logout)) instanceof eppLogoutResponse) && ($response->Success()))
             {
+                $this->loggedin = false;
                 return true;
             }
             else

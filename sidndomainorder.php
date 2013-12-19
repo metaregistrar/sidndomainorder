@@ -207,9 +207,10 @@ function signal_handler($signal)
         case SIGTERM:
         case SIGKILL:
         case SIGINT:
-            print "Program aborted - closing connections...T\n";
+            print "Program aborted\n";
             if ($epp)
             {
+                echo "closing SIDN EPP connection\n";
                 $epp->disconnect();
             }
             exit;
