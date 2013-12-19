@@ -1,6 +1,9 @@
 <?php
 include_once("./crypt.php");
 include_once("./epp.php");
+include_once("./analyze.php");
+include_once("./setorderperiod.php");
+include_once("./infoorderperiod.php");
 
 error_reporting(E_ALL ^ E_NOTICE);
 date_default_timezone_set("UTC");
@@ -42,6 +45,17 @@ else
             // Analyze the DOMAIN_ORDER_FREQUENCY report from SIDN
             checkinput($argv[2]);
             analyzefile($argv[2]);
+            break;
+        case 'info':
+            if ($argc<3)
+            {
+                die(usage());
+            }
+            checkinput($argv[2]);
+            if ($params = load_settings())
+            {
+                infoorderperiod($argv[2],$params);
+            }
             break;
         case 'set1month':
             if ($argc<3)
@@ -125,7 +139,7 @@ function checkinput($file)
 
 function usage()
 {
-    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php <analyze> <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php <set1month> <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php <set3month> <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php <set12month> <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
+    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
 }
 
 function load_settings()
@@ -178,239 +192,3 @@ function load_settings()
     }
 }
 
-
-
-function setorderperiods($filename, $period, $params)
-{
-    echo "Connecting to SIDN EPP service\n";
-    if ($epp = new epp($params->username, $params->password))
-    {
-        if ($epp->connect())
-        {
-            $reportmonth = ($period==1?"month":"months");
-            echo "Setting order period to $period $reportmonth for al domain names in file $filename.\n";
-            $linenumber = 0;
-            $domains = file($filename, FILE_IGNORE_NEW_LINES);
-            foreach ($domains as $domain)
-            {
-                $linenumber++;
-                // Skip first 2 lines of the report
-                if (($linenumber > 2) && (strlen($domain)>1))
-                {
-                    list ($domainname, $startperiod, $frequency, $endperiod, $nextperiod)= explode(';',$domain);
-                    if ($frequency == $period)
-                    {
-                        echo "Domain name $domainname already has a period of $period $reportmonth, skipped this domain name\n";
-                    }
-                    else
-                    {
-                        echo "Setting new period of $period $reportmonth for domain name $domainname\n";
-                        try
-                        {
-                            $currentperiod = $epp->infodomainperiod($domainname);
-                            if ($currentperiod == $period)
-                            {
-                                echo "WARNING: Current period in EPP is already set to $period $reportmonth, downloaded report file may be wrong!\n";
-                            }
-                            else
-                            {
-                                $epp->setdomainperiod($domainname, $period);
-                            }
-                        }
-                        catch (eppException $e)
-                        {
-                            echo "ERROR occurred: ".$e->getMessage()."\n";
-                        }
-                    }
-                }
-            }
-            $epp->disconnect();
-        }
-        else
-        {
-            echo "ERROR: Unable to connect to SIDN EPP service";
-        }
-    }
-    else
-    {
-        echo "ERROR: Unable to connect to EPP service\n";
-    }
-
-
-}
-
-function setsimpleorderperiods($filename, $period, $params)
-{
-    echo "Connecting to SIDN EPP service\n";
-    if ($epp = new epp($params->username, $params->password))
-    {
-        if ($epp->connect())
-        {
-            $reportmonth = ($period==1?"month":"months");
-            echo "Setting order period to $period $reportmonth for al domain names in file $filename.\n";
-            $linenumber = 0;
-            $domains = file($filename, FILE_IGNORE_NEW_LINES);
-            foreach ($domains as $domainname)
-            {
-                echo "Setting new period of $period $reportmonth for domain name $domainname\n";
-                try
-                {
-                    $epp->setdomainperiod($domainname, $period);
-                }
-                catch (eppException $e)
-                {
-                    echo "ERROR occurred: ".$e->getMessage()."\n";
-                }
-            }
-            $epp->disconnect();
-        }
-        else
-        {
-            echo "ERROR: Unable to connect to SIDN EPP service";
-        }
-    }
-    else
-    {
-        echo "ERROR: Unable to connect to EPP service\n";
-    }
-
-
-}
-
-
-
-function analyzefile($filename)
-{
-    // Variable initializations
-    $frequencycount = array(3=>0,12=>0,1=>0);
-    $toprocess = array();
-    $starts = array();
-    $totalindex = 0;
-    $stacked = 0;
-
-    // Lets do the analysis
-    echo "Analyzing file $filename\n";
-    $domains = file($filename, FILE_IGNORE_NEW_LINES);
-    $linenumber = 0;
-    foreach ($domains as $domain)
-    {
-        $linenumber++;
-        // Skip first 2 lines of the report, they contain header data
-        if (($linenumber > 2) && (strlen($domain)>1))
-        {
-            list ($domainname, $startperiod, $frequency, $endperiod, $nextperiod)= explode(';',$domain);
-            if (isset($toprocess[$domainname]))
-            {
-                $doubles[]=$domainname;
-                echo "Double domain name alert: $domainname\n";
-            }
-            else
-            {
-                // For each and every domain name, fill an array with the order period
-                $toprocess[$domainname]=$frequency;
-                $startmonth = substr($startperiod,3,7);
-                $starts[$startmonth][$frequency]++;
-            }
-            // If the last variable is filled, this is a stacked order, these domain names appear twice in the report.
-            if (strlen($nextperiod)>0)
-            {
-                echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
-                $stacked++;
-            }
-            $frequencycount[$frequency]++;
-        }
-    }
-    unset($domains);
-    // This array contains all orders counted by number of periods
-    echo "\nProcessed ".count($toprocess)." domain names.\n";
-    foreach ($frequencycount as $period=>$count)
-    {
-        $namestring = ($count>1?"names":"name");
-        echo "Found $count domain $namestring with ".$period." month order period.\n";
-        $totalindex += $count;
-    }
-    echo "Found $stacked stacked order".($stacked>1?"s":"")."\n";
-
-    // The total number of domain names in the list plus the stacked orders must match the total number of domain names found in the report
-    $total = count($toprocess);
-    if ($totalindex!=$total)
-    {
-        echo "\n\nWARNING: Total uniqe domain names in this report ($total) differs from order periods reported ($totalindex).\nThis means that some domain names are listed more than once in this report.\nDouble domain names:\n";
-        if (is_array($doubles))
-        {
-            foreach ($doubles as $double)
-            {
-                echo '-> '.$double."\n";
-            }
-        }
-    }
-
-    // This list tries to show at what dates you can expect to receive an invoice for the domain names
-    echo "\n\nOverview of ordering periods and invoices\n\n";
-    $invoice = array();
-    foreach ($starts as $start=>$count)
-    {
-        $startyear = substr($start,3,4);
-        if ($startyear == '2013')
-        {
-            $invoicedate = '01-01-2014';
-            $invoicedate = '20140101';
-        }
-        else
-        {
-            $startmonth = substr($start,0,2);
-            if ($startmonth=='12')
-            {
-                $startmonth = '01';
-                $startyear+=1;
-            }
-            else
-            {
-                $startmonth= sprintf("%02d",$startmonth+1);
-            }
-            $invoicedate = '01-'.$startmonth.'-'.$startyear;
-            $invoicedate = $startyear.$startmonth.'01';
-        }
-        foreach ($count as $period=>$counter)
-        {
-            $invoice[$invoicedate][$period]+=$counter;
-        }
-    }
-    ksort($invoice);
-    foreach ($invoice as $date=>$valuecount)
-    {
-        echo "On ".substr($date,6,2).'-'.substr($date,4,2).'-'.substr($date,0,4)." the invoice will contain:\n";
-        $grandtotal = 0;
-        foreach ($valuecount as $period=>$counter)
-        {
-            $year = substr($date,6,4);
-            switch ($period)
-            {
-                case '1':
-                    if ($year>2014)
-                    {
-                        $price = 0.33;
-                    }
-                    else
-                    {
-                        $price = 0.30;
-                    }
-                    break;
-                case '12':
-                    $price = 3.40;
-                    break;
-                default:
-                    $price = 0.92;
-                    break;
-            }
-            $grandtotal += ($counter*$price);
-            $total = number_format($counter*$price,2,'.','');
-            echo "     $counter domain names with period ".$period."m for EUR ".number_format($price,2,'.','').": $total EUR\n";
-        }
-        $grandtotal = number_format($grandtotal,2,'.','');
-        echo "     Total invoice amount: $grandtotal\n\n";
-
-
-    }
-
-}
