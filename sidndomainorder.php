@@ -6,6 +6,12 @@ include_once("./analyze.php");
 include_once("./setorderperiod.php");
 include_once("./infoorderperiod.php");
 
+$epp = null;
+
+declare(ticks = 1);
+
+pcntl_signal(SIGTERM, "signal_handler");
+pcntl_signal(SIGINT, "signal_handler");
 error_reporting(E_ALL ^ E_NOTICE);
 date_default_timezone_set("UTC");
 if ($argc<2)
@@ -193,3 +199,19 @@ function load_settings()
     }
 }
 
+function signal_handler($signal)
+{
+    global $epp;
+    switch($signal)
+    {
+        case SIGTERM:
+        case SIGKILL:
+        case SIGINT:
+            print "Program aborted - closing connections...T\n";
+            if ($epp)
+            {
+                $epp->disconnect();
+            }
+            exit;
+    }
+}

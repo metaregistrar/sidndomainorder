@@ -3,6 +3,7 @@
 
 function setorderperiods($filename, $period, $params)
 {
+    global $epp;
     echo "Connecting to SIDN EPP service\n";
     if ($epp = new epp($params->username, $params->password))
     {
@@ -62,6 +63,7 @@ function setorderperiods($filename, $period, $params)
 
 function setsimpleorderperiods($filename, $period, $params)
 {
+    global $epp;
     echo "Connecting to SIDN EPP service\n";
     if ($epp = new epp($params->username, $params->password))
     {

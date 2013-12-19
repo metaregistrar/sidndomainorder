@@ -2,6 +2,7 @@
 
 function infoorderperiod($filename, $params)
 {
+    global $epp;
     echo "Connecting to SIDN EPP service\n";
     if ($epp = new epp($params->username, $params->password))
     {
