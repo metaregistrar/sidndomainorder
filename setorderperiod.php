@@ -40,7 +40,7 @@ function setorderperiods($filename, $period, $params)
                         }
                         catch (eppException $e)
                         {
-                            echo "ERROR occurred: ".$e->getMessage()." for domain name $domainname\n";
+                            echo "ERROR occurred for domain name $domainname: ".$e->getMessage()."\n";
                         }
                     }
                 }
@@ -80,7 +80,7 @@ function setsimpleorderperiods($filename, $period, $params)
                 }
                 catch (eppException $e)
                 {
-                    echo "ERROR occurred: ".$e->getMessage()." for domain name $domainname\n";
+                    echo "ERROR occurred for domain name $domainname: ".$e->getMessage()." for domain name $domainname\n";
                 }
             }
             $epp->disconnect();
