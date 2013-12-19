@@ -6,14 +6,17 @@ include_once("./analyze.php");
 include_once("./setorderperiod.php");
 include_once("./infoorderperiod.php");
 
+
+// I don't like globals, but the abort handler must be able to close the EPP connection
 $epp = null;
 
 declare(ticks = 1);
-
 pcntl_signal(SIGTERM, "signal_handler");
 pcntl_signal(SIGINT, "signal_handler");
+
 error_reporting(E_ALL ^ E_NOTICE);
 date_default_timezone_set("UTC");
+
 if ($argc<2)
 {
     die(usage());
@@ -59,6 +62,7 @@ else
                 die(usage());
             }
             checkinput($argv[2]);
+            // Info all domain names in the csv file
             if ($params = load_settings())
             {
                 infoorderperiod($argv[2],$params);
