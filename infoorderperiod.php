@@ -10,8 +10,16 @@ function infoorderperiod($filename, $params)
             $domains = file($filename, FILE_IGNORE_NEW_LINES);
             foreach ($domains as $domainname)
             {
-                $currentperiod = $epp->infodomainperiod($domainname);
-                echo "Next invoice period set for $domainname: $period months\n";
+                try
+                {
+                    $currentperiod = $epp->infodomainperiod($domainname);
+                    echo "Next invoice period set for $domainname: $period months\n";
+                }
+                catch (eppException $e)
+                {
+                    echo "ERROR occurred: ".$e->getMessage()."\n";
+                }
+
             }
         }
     }

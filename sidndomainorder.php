@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 include_once("./crypt.php");
 include_once("./epp.php");
