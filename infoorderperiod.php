@@ -12,7 +12,7 @@ function infoorderperiod($filename, $params)
             {
                 try
                 {
-                    $currentperiod = $epp->infodomainperiod($domainname);
+                    $period = $epp->infodomainperiod($domainname);
                     echo "Next invoice period set for $domainname: $period months\n";
                 }
                 catch (eppException $e)
