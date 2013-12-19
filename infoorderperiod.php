@@ -17,7 +17,7 @@ function infoorderperiod($filename, $params)
                 }
                 catch (eppException $e)
                 {
-                    echo "ERROR occurred: ".$e->getMessage()."\n";
+                    echo "ERROR occurred: ".$e->getMessage()." for domain name $domainname\n";
                 }
 
             }
