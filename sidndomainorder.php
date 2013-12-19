@@ -211,7 +211,7 @@ function signal_handler($signal)
             if ($epp)
             {
                 echo "Closing SIDN EPP connection\n";
-                $epp->disconnect();
+                $epp->forcedisconnect();
             }
             exit;
     }

@@ -44,7 +44,13 @@ class epp
             $this->conn->disconnect();
             $this->connected = false;
         }
+    }
 
+    public function forcedisconnect()
+    {
+        // Empty buffers
+        $buffer  = $this->conn->read();
+        $this->disconnect();
     }
 
     public function testconnection()
@@ -77,13 +83,13 @@ class epp
             }
             else
             {
-                echo "Login failed with message ".$response->getResultMessage()."\n";
+                echo "Login failed with message: ".$response->getResultMessage()."\n";
                 return false;
             }
         }
         catch (eppException $e)
         {
-            echo "Login failed with message ".$e->getMessage()."\n";
+            echo "Login failed with message: ".$e->getMessage()."\n";
             return false;
         }
     }
@@ -93,7 +99,6 @@ class epp
         try
         {
             $logout = new eppLogoutRequest();
-            echo $logout->saveXML();
             if ((($response = $this->conn->writeandread($logout)) instanceof eppLogoutResponse) && ($response->Success()))
             {
                 $this->loggedin = false;
@@ -101,13 +106,13 @@ class epp
             }
             else
             {
-                echo "Logout failed with message ".$response->getResultMessage()."\n";
+                echo "Logout failed with message: ".$response->getResultMessage()."\n";
                 return false;
             }
         }
         catch (eppException $e)
         {
-            echo "Logout failed with message ".$e->getMessage()."\n";
+            echo "Logout failed with message: ".$e->getMessage()."\n";
             return false;
         }
     }
@@ -121,6 +126,11 @@ class epp
             /* @var $response sidnEppInfoDomainResponse */
             return $response->getDomainPeriod();
         }
+        else
+        {
+            echo "InfoDomain failed with message: ".$response->getResultMessage()."\n";
+            return false;
+        }
     }
 
     public function setdomainperiod($domainname, $period)
@@ -132,6 +142,11 @@ class epp
             /* @var $response eppRenewResponse */
             echo $response->getResultMessage()."\n";
             return true;
+        }
+        else
+        {
+            echo "RenewDomain failed with message: ".$response->getResultMessage()."\n";
+            return false;
         }
     }
 }
