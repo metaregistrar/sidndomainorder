@@ -2,7 +2,7 @@
 
 function distill($filename,$period,$next)
 {
-    echo "Distilling all $period orders from file $filename\n";
+    echo "302225;View orderperiod per domain\nDOMAINNAME;START ORDERPERIOD;FREQUENCY (MONTH);END ORDERPERIOD;NEXT FREQUENCY(MONTH)\n";
     $period = str_replace('m','',$period);
     $next = str_replace('m','', $next);
     $domains = file($filename, FILE_IGNORE_NEW_LINES);
