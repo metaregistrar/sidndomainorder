@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 include_once("./crypt.php");
 include_once("./epp.php");
@@ -8,14 +7,17 @@ include_once("./infoorderperiod.php");
 
 
 // I don't like globals, but the abort handler must be able to close the EPP connection
+date_default_timezone_set("UTC");
 $epp = null;
 
-declare(ticks = 1);
-pcntl_signal(SIGTERM, "signal_handler");
-pcntl_signal(SIGINT, "signal_handler");
+if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN')
+{
+    declare(ticks = 1);
+    pcntl_signal(SIGTERM, "signal_handler");
+    pcntl_signal(SIGINT, "signal_handler");
+}
 
 error_reporting(E_ALL ^ E_NOTICE);
-date_default_timezone_set("UTC");
 
 if ($argc<2)
 {
@@ -67,6 +69,17 @@ else
             {
                 infoorderperiod($argv[2],$params);
             }
+            break;
+        case 'distill':
+            if ($argc<4)
+            {
+                die(usage());
+            }
+            if (($argv[3]!='1m') && ($argv[3]!='3m') && ($argv[3]!='12m'))
+            {
+                die(usage());
+            }
+            distill($argv[2],$argv[3]);
             break;
         case 'set1month':
             if ($argc<3)
@@ -150,7 +163,7 @@ function checkinput($file)
 
 function usage()
 {
-    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
+    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php distill <inputfile> [1m|3m|12m]\n\n       Distill orders from the input file.\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
 }
 
 function load_settings()

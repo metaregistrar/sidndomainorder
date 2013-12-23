@@ -1,5 +1,27 @@
 <?php
 
+function distill($filename,$period)
+{
+    echo "Distilling all $period orders from file $filename\n";
+    $period = str_replace('m','',$period);
+    $domains = file($filename, FILE_IGNORE_NEW_LINES);
+    $linenumber = 0;
+    foreach ($domains as $domain)
+    {
+        $linenumber++;
+        // Skip first 2 lines of the report, they contain header data
+        if (($linenumber > 2) && (strlen($domain)>1))
+        {
+            list ($domainname, $startperiod, $frequency, $endperiod, $nextperiod)= explode(';',$domain);
+            if ($frequency==$period)
+            {
+                echo $domain."\n";
+            }
+        }
+    }
+}
+
+
 function analyzefile($filename)
 {
     // Variable initializations
@@ -35,7 +57,7 @@ function analyzefile($filename)
             // If the last variable is filled, this is a stacked order, these domain names appear twice in the report.
             if (strlen($nextperiod)>0)
             {
-                echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
+                //echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
                 $stacked++;
             }
             $frequencycount[$frequency]++;
