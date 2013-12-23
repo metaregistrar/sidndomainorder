@@ -27,6 +27,7 @@ else
 {
     // Retrieve extra parameters from the arguments
     $simplefile = false;
+    $next = null;
     foreach ($argv as $arg)
     {
         if (substr($arg,0,2)=='--')
@@ -38,6 +39,10 @@ else
                 {
                     $simplefile = true;
                 }
+            }
+            if ($subarg == '--next')
+            {
+                $next = $param;
             }
         }
     }
@@ -79,7 +84,8 @@ else
             {
                 die(usage());
             }
-            distill($argv[2],$argv[3]);
+
+            distill($argv[2],$argv[3],$next);
             break;
         case 'set1month':
             if ($argc<3)
@@ -163,7 +169,7 @@ function checkinput($file)
 
 function usage()
 {
-    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php distill <inputfile> [1m|3m|12m]\n\n       Distill orders from the input file.\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
+    return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php distill <inputfile> <1m|3m|12m> [--next=12m]\n\n       Distill orders from the input file.\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
 }
 
 function load_settings()

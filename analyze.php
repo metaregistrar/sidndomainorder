@@ -1,9 +1,10 @@
 <?php
 
-function distill($filename,$period)
+function distill($filename,$period,$next)
 {
     echo "Distilling all $period orders from file $filename\n";
     $period = str_replace('m','',$period);
+    $next = str_replace('m','', $next);
     $domains = file($filename, FILE_IGNORE_NEW_LINES);
     $linenumber = 0;
     foreach ($domains as $domain)
@@ -15,7 +16,18 @@ function distill($filename,$period)
             list ($domainname, $startperiod, $frequency, $endperiod, $nextperiod)= explode(';',$domain);
             if ($frequency==$period)
             {
-                echo $domain."\n";
+                if ($next)
+                {
+                    if ($next==$nextperiod)
+                    {
+                        echo $domain."\n";
+                    }
+                }
+                else
+                {
+                    echo $domain."\n";
+                }
+
             }
         }
     }
