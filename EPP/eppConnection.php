@@ -18,7 +18,7 @@ class EppConnection
      * Time-out value for the server connection
      * @var integer
      */
-    protected $timeout = 5;
+    protected $timeout = 15;
     
     /**
      * Username to be used in the connection
@@ -448,7 +448,7 @@ class EppConnection
                     $clienttransid = $response->getClientTransactionId();                    
                     if (($clienttransid) && ($clienttransid != $requestsessionid))
                     {
-                        throw new eppException("Client transaction id $requestsessionid does not matched returned $clienttransid");
+                        throw new eppException("Client transaction id $requestsessionid does not match returned id $clienttransid");
                     }
                     $response->setXpath($this->getServices());
                     $response->setXpath($this->getExtensions());
