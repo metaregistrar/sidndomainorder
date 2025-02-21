@@ -1,0 +1,3 @@
+<?php
+CONST EPPUSERNAME = '';
+CONST EPPPASSWORD = '';
