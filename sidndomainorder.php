@@ -1,18 +1,16 @@
 <?php
-
-include DIRNAME(__FILE__).'/vendor/autoload.php';
-include DIRNAME(__FILE__).'/functions//crypt.php';
+// Functions to analyze the SIDN domainorder file
 include DIRNAME(__FILE__).'/functions/analyze.php';
-include DIRNAME(__FILE__).'/functions/setorderperiod.php';
-include DIRNAME(__FILE__).'/functions/infoorderperiod.php';
+// Functions to connect to EPP and view or modify domain order periods
+include DIRNAME(__FILE__).'/functions/epp.php';
 
+CONST EPPUSERNAME = '';
+CONST EPPPASSWORD = '';
 
 // I don't like globals, but the abort handler must be able to close the EPP connection
 date_default_timezone_set("UTC");
-$epp = null;
 
-if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN')
-{
+if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
     declare(ticks = 1);
     pcntl_signal(SIGTERM, "signal_handler");
     pcntl_signal(SIGINT, "signal_handler");
@@ -20,150 +18,88 @@ if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN')
 
 error_reporting(E_ALL ^ E_NOTICE);
 
-if ($argc<2)
-{
+if ($argc<2) {
     die(usage());
 }
-else
-{
+else {
     // Retrieve extra parameters from the arguments
     $simplefile = false;
     $next = null;
-    foreach ($argv as $arg)
-    {
-        if (substr($arg,0,2)=='--')
-        {
+    foreach ($argv as $arg) {
+        if (substr($arg,0,2)=='--') {
             list($subarg,$param)=explode('=',$arg);
-            if ($subarg == '--file')
-            {
-                if ($param == 'simple')
-                {
+            if ($subarg == '--file') {
+                if ($param == 'simple') {
                     $simplefile = true;
                 }
             }
-            if ($subarg == '--next')
-            {
+            if ($subarg == '--next') {
                 $next = $param;
             }
         }
     }
-    switch($argv[1])
-    {
+    switch($argv[1]) {
         case 'connect':
-            if ($params = load_settings())
-            {
+            if ($params = load_settings()) {
                 echo "Settings succesfully loaded from file\n";
             }
             break;
         case 'analyze':
-            if ($argc<3)
-            {
+            if ($argc<3) {
                 die(usage());
             }
             // Analyze the DOMAIN_ORDER_FREQUENCY report from SIDN
-            checkinput($argv[2]);
-            analyzefile($argv[2]);
+            $analyze = new analyze($argv[2]);
+            $analyze->analyzefile();
             break;
         case 'info':
-            if ($argc<3)
-            {
+            if ($argc<3) {
                 die(usage());
             }
-            checkinput($argv[2]);
             // Info all domain names in the csv file
-            if ($params = load_settings())
-            {
-                infoorderperiod($argv[2],$params);
-            }
+            $epp = new epp(EPPUSERNAME,EPPPASSWORD);
+            $epp->infoorderperiod($argv[2]);
             break;
         case 'distill':
-            if ($argc<4)
-            {
+            if ($argc<4) {
                 die(usage());
             }
-            if (($argv[3]!='1m') && ($argv[3]!='3m') && ($argv[3]!='12m'))
-            {
+            if (($argv[3]!='1m') && ($argv[3]!='3m') && ($argv[3]!='12m')) {
                 die(usage());
             }
-
-            distill($argv[2],$argv[3],$next);
+            $analyze = new analyze($argv[2]);
+            $analyze->distill($argv[3],$next);
             break;
         case 'set1month':
-            if ($argc<3)
-            {
+            if ($argc<3) {
                 die(usage());
             }
             // Set all domain names in the specified file to 1-month order frequency
-            checkinput($argv[2]);
-            if ($params = load_settings())
-            {
-                if ($simplefile)
-                {
-                    setsimpleorderperiods($argv[2],1, $params);
-                }
-                else
-                {
-                    setorderperiods($argv[2],1, $params);
-                }
-
-            }
+            $epp = new epp(EPPUSERNAME,EPPPASSWORD);
+            $epp->setsimpleorderperiods($argv[2],1);
             break;
         case 'set3month':
-            if ($argc<3)
-            {
+            if ($argc<3) {
                 die(usage());
             }
             // Set all domain names in the specified file to 3-month order frequency
-            checkinput($argv[2]);
-            if ($params=load_settings())
-            {
-                if ($simplefile)
-                {
-                    setsimpleorderperiods($argv[2],3, $params);
-                }
-                else
-                {
-                    setorderperiods($argv[2],3, $params);
-                }
-            }
+            $epp = new epp(EPPUSERNAME, EPPPASSWORD);
+            $epp->setsimpleorderperiods($argv[2],3);
             break;
+
         case 'set12month':
-            if ($argc<3)
-            {
+            if ($argc<3) {
                 die(usage());
             }
+            $epp = new epp(EPPUSERNAME,EPPPASSWORD);
             // Set all domain names in the specified file to 12-month order frequency
-            checkinput($argv[2]);
-            if ($params=load_settings())
-            {
-                if ($simplefile)
-                {
-                    setsimpleorderperiods($argv[2],12, $params);
-                }
-                else
-                {
-                    setorderperiods($argv[2],12, $params);
-                }
-
-            }
+            $epp->setsimpleorderperiods($argv[2],12);
             break;
         default:
             die(usage());
     }
 }
 
-
-function checkinput($file)
-{
-    if ($file) {
-        if (!file_exists($file)) {
-            die("File ".$file." could not be opened. Please specify the correct file name. File names are case sensitive.");
-        }
-    }
-    else{
-        die(usage());
-    }
-}
 
 function usage() {
     return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php distill <inputfile> <1m|3m|12m> [--next=12m]\n\n       Distill orders from the input file.\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
@@ -175,12 +111,10 @@ function load_settings() {
     if (file_exists($inifile)) {
         $params = json_decode($crypt->Decrypt(file_get_contents($inifile)));
         if ($params) {
-            if ((strlen($params->username)>0) && (strlen($params->password)>0))
-            {
+            if ((strlen($params->username)>0) && (strlen($params->password)>0)) {
                 return $params;
             }
-            else
-            {
+            else {
                 die ("User login credentials not found in $inifile file. Please remove the file and re-enter your login credentials\n");
             }
         }
@@ -219,8 +153,7 @@ function signal_handler($signal) {
         case SIGKILL:
         case SIGINT:
             print "Program aborted\n";
-            if ($epp)
-            {
+            if ($epp) {
                 echo "Closing SIDN EPP connection\n";
                 $epp->forcedisconnect();
             }

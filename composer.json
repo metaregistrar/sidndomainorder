@@ -10,6 +10,7 @@
     }
   ],
   "require": {
-    "metaregistrar/php-epp-client": "dev-master"
+    "metaregistrar/php-epp-client": "dev-master",
+    "ext-pcntl": "*"
   }
 }
