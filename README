@@ -24,10 +24,10 @@ Het script heeft een aantal mogelijke parameters:
 Alle domeinnamen die al op 1, 3 of 12 maanden staan worden overgeslagen. Je kunt het script meerdere malen uitvoeren, de nieuwe orderperiode wordt dan telkens overschreven.
 Let op: het script slaat altijd de eerste twee regels van het CSV bestand over, omdat daar header informatie in staat.
 
-Dit script kan worden gebruikt op elke machine waarop PHP 5.4 is geïnstalleerd. Andere modules zijn niet nodig.
+Dit script is getest op PHP versies tot en met 8.3. Extra modules zijn niet nodig.
 Let op: Zorg ervoor dat het IP adres dat je gebruikt is gewhitelist bij SIDN, anders werkt de EPP verbinding niet.
 
-Voor vragen of problemen neem gerust contact op met de firma Metaregistrar.
+Voor vragen of problemen neem gerust contact op met Metaregistrar BV.
 Als u de EPP connectie die in dit script is opgenomen wilt gebruiken voor uw eigen software, klik dan hier: https://github.com/metaregistrar/php-epp-client
 
 sidndomainorder
@@ -50,7 +50,7 @@ The script uses the following parameters:
  All domain names in the specified report that are already on the specified invoicing period are skipped. You can run the script several times, the order period will be overwitten in that case.
  Please note that the script always skips the first 2 lines of the SIDN report, because those lines contain header information.
 
- You can use this script on any machine with PHP 5.4 installed. Additional modules are not needed.
+ The script is tested on PHP versions until 8.3. Additional modules are not needed.
  Please note that the IP address of the machine you are using must be whitelisted with SIDN to ensure proper EPP connection.
 
  If you experience problems or have questions, feel free to contact us: www.metaregistrar.com
