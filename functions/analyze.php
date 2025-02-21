@@ -5,27 +5,29 @@ class analyze {
 
     public function __construct($filename) {
         if (!file_exists($filename)) {
-            die("File ".$filename." could not be opened. Please specify the correct file name. File names are case sensitive.");
+            die("ERROR: File ".$filename." could not be opened. Please specify the correct file name. File names are case sensitive.\n\n");
         }
         $this->filename = $filename;
     }
 
     public function distill($period, $next): void {
-        echo "302225;View orderperiod per domain\nDOMAINNAME;START ORDERPERIOD;FREQUENCY (MONTH);END ORDERPERIOD;NEXT FREQUENCY(MONTH)\n";
-        $period = str_replace('m', '', $period);
-        $next = str_replace('m', '', $next);
+        if ($period) {
+            $period = str_replace('m', '', $period);
+        }
+        if ($next) {
+            $next = str_replace('m', '', $next);
+        }
         $lines = file($this->filename, FILE_IGNORE_NEW_LINES);
-        //$linenumber = 0;
         foreach ($lines as $line) {
-            //$linenumber++;
             // Skip the header lines of the report
             if (str_contains($line, 'View orderperiod per domain')) {
+                echo $line."\n";
                 continue;
             }
             if (str_contains($line, 'START ORDERPERIOD')) {
+                echo $line."\n";
                 continue;
             }
-
             list (,,$frequency,,$nextperiod) = explode(';', $line);
             if ($frequency == $period) {
                 if ($next) {
@@ -35,7 +37,6 @@ class analyze {
                 } else {
                     echo $line . "\n";
                 }
-
             }
         }
     }
@@ -44,21 +45,20 @@ class analyze {
     public function analyzefile(): void {
         ini_set('memory_limit', '512M');
         // Variable initializations
-        $frequencycount = [0 => 0, 3 => 0, 12 => 0, 1 => 0];
+        $frequencycount = [3 => 0, 12 => 0, 1 => 0];
         $processed = [];
         $starts = [];
-        //$totalindex = 0;
+        $invoices = [];
         $stacked = 0;
 
-        // Lets do the analysis
+        // Let's do the analysis
         echo "Analyzing file ".$this->filename."\n";
         $lines = file($this->filename, FILE_IGNORE_NEW_LINES);
-        //$linenumber = 0;
         foreach ($lines as $line) {
-            //$linenumber++;
-
             // Skip the header lines of the report
             if (str_contains($line, 'View orderperiod per domain')) {
+                list(,$date) = explode(' till ',$line);
+                $startyear = (int) date("Y",strtotime($date));
                 continue;
             }
             if (str_contains($line, 'START ORDERPERIOD')) {
@@ -70,25 +70,28 @@ class analyze {
             if ($frequency == '') {
                 // No order frequency known yet for this domain name
                 // What is the order period?
-                $frequency = '0';
-            }
-            if ($frequency == '3') {
-                echo $line . "\n";
+                $frequency = '12';
             }
             if (isset($processed[$domainname])) {
-                //$doubles[]=$domainname;
                 echo "Double domain name alert: $domainname\n";
             } else {
                 // For each and every domain name, fill an array with the order period
+                if ((strlen($nextperiod) > 0) && ($nextperiod > 0)) {
+                    //echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
+                    $nextfrequency = $nextperiod;
+                    $stacked++;
+                } else {
+                    $nextfrequency = $frequency;
+                }
                 $processed[$domainname] = $frequency;
-                $startmonth = date("m", strtotime($startperiod));
-                @$starts[$startmonth][$frequency]++;
+                $startmonth = date("Y-m-01", strtotime($startperiod));
+                @$starts[$startmonth][$nextfrequency]++;
+                $invoicemonth = date("Y-m-01", strtotime($startperiod.'+'.$nextfrequency.' months'));
+                @$invoices[$invoicemonth][$frequency]++;
+
             }
             // If the last variable is filled, this is a stacked order, these domain names appear twice in the report.
-            if ((strlen($nextperiod) > 0) && ($nextperiod > 0)) {
-                //echo "Found a stacked order of $nextperiod months for domain name $domainname\n";
-                $stacked++;
-            }
+
             @$frequencycount[$frequency]++;
         }
 
@@ -97,57 +100,45 @@ class analyze {
         echo "\nProcessed " . count($processed) . " domain names.\n";
         foreach ($frequencycount as $period => $count) {
             $namestring = ($count > 1 ? "names" : "name");
-            echo "Found $count domain $namestring with " . $period . " month order period.\n";
-            //$totalindex += $count;
+            $periodstring = $period.' month';
+            if ($period == 0) {
+                $periodstring = 'unknown';
+            }
+            echo "Found $count domain $namestring with " . $periodstring . " order period.\n";
         }
-        echo "Found $stacked stacked order" . ($stacked > 1 ? "s" : "") . "\n";
+        echo "\nFound $stacked domain name" . ($stacked > 1 ? "s" : "") . " with a future order period\n";
 
-        // The total number of domain names in the list plus the stacked orders must match the total number of domain names found in the report
-        //$total = count($processed);
-        //if ($totalindex != $total) {
-            //echo "\n\nWARNING: Total uniqe domain names in this report ($total) differs from order periods reported ($totalindex).\nThis means that some domain names are listed more than once in this report.\nDouble domain names:\n";
-            //if (is_array($doubles))
-            // {
-            //    foreach ($doubles as $double)
-            //    {
-            //        echo '-> '.$double."\n";
-            //    }
-            // }
-        //}
-        $startyear = 2025;
         // This list tries to show at what dates you can expect to receive an invoice for the domain names
         echo "\n\nOverview of ordering periods and invoices\n\n";
-        $invoice = array();
-        $invoicedate = '';
-        foreach ($starts as $startmonth => $count) {
-            if ($startmonth == '12') {
-                $startmonth = '01';
-                $startyear += 1;
-            } else {
-                $startmonth = sprintf("%02d", $startmonth + 1);
+        foreach ($invoices as $invoicemonth => $count) {
+            $invoicedate = date("M Y",strtotime($invoicemonth));
+            $totalmoney = 0;
+            echo "In $invoicedate you will receive an invoice for: \n";
+            foreach ($count as $frequency=>$amount) {
+                $money = 0;
+                switch($frequency) {
+                    case 0:
+                        break;
+                    case 1:
+                        $money = 0.35 * $amount;
+                        break;
+                    case 3:
+                        $money = 0.95 * $amount;
+                        break;
+                    case 12:
+                        $money = 3.55 * $amount;
+                        break;
+                    default:
+                        echo "UNKNOWN FREQUENCY: $frequency\n";
+                        die();
+                }
+                $totalmoney += $money;
+                $money = number_format($money,2,'.','');
+                echo "   $frequency-month domains: $amount ($money euro)\n";
             }
-            $invoicedate = $startyear . $startmonth . '01';
+            $totalmoney = number_format($totalmoney,2,'.','');
+            echo "Total amount in $invoicedate: $totalmoney euro\n\n";
         }
-        foreach ($count as $period => $counter) {
-            @$invoice[$invoicedate][$period] += $counter;
-        }
-
-        ksort($invoice);
-        foreach ($invoice as $date => $valuecount) {
-            echo "On " . substr($date, 6, 2) . '-' . substr($date, 4, 2) . '-' . substr($date, 0, 4) . " the invoice will contain:\n";
-            $grandtotal = 0;
-            foreach ($valuecount as $period => $counter) {
-                $price = match ($period) {
-                    '1' => 0.35,
-                    '12' => 3.55,
-                    default => 0.96,
-                };
-                $grandtotal += ($counter * $price);
-                $total = number_format($counter * $price, 2, '.', '');
-                echo "     $counter domain names with period " . $period . "m for EUR " . number_format($price, 2, '.', '') . ": $total EUR\n";
-            }
-            $grandtotal = number_format($grandtotal, 2, '.', '');
-            echo "     Total invoice amount: $grandtotal\n\n";
-        }
+        echo "Disclaimer: Amounts for 2026 may differ: SIDN pricing for 2026 is not yet available.\n\n";
     }
 }
