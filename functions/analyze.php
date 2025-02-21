@@ -110,6 +110,7 @@ class analyze {
 
         // This list tries to show at what dates you can expect to receive an invoice for the domain names
         echo "\n\nOverview of ordering periods and invoices\n\n";
+        $totaltotal = 0;
         foreach ($invoices as $invoicemonth => $count) {
             $invoicedate = date("M Y",strtotime($invoicemonth));
             $totalmoney = 0;
@@ -136,9 +137,14 @@ class analyze {
                 $money = number_format($money,2,'.','');
                 echo "   $frequency-month domains: $amount ($money euro)\n";
             }
+            $totaltotal += $totalmoney;
             $totalmoney = number_format($totalmoney,2,'.','');
-            echo "Total amount in $invoicedate: $totalmoney euro\n\n";
+            echo "Total cost in $invoicedate: $totalmoney euro\n\n";
         }
+        $average = $totaltotal / count($processed);
+        $average = number_format($average,2,'.','');
+        $totaltotal = number_format($totaltotal,2,'.','');
+        echo "Grand total $totaltotal euro per year for ".count($processed)." domain names, averaging $average euro per domain name\n\n";
         echo "Disclaimer: Amounts for 2026 may differ: SIDN pricing for 2026 is not yet available.\n\n";
     }
 }
