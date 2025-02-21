@@ -1,9 +1,10 @@
 <?php
+
 include DIRNAME(__FILE__).'/vendor/autoload.php';
-include_once("./crypt.php");
-include_once("./analyze.php");
-include_once("./setorderperiod.php");
-include_once("./infoorderperiod.php");
+include DIRNAME(__FILE__).'/functions//crypt.php';
+include DIRNAME(__FILE__).'/functions/analyze.php';
+include DIRNAME(__FILE__).'/functions/setorderperiod.php';
+include DIRNAME(__FILE__).'/functions/infoorderperiod.php';
 
 
 // I don't like globals, but the abort handler must be able to close the EPP connection
@@ -154,33 +155,26 @@ else
 
 function checkinput($file)
 {
-    if ($file)
-    {
-        if (!file_exists($file))
-        {
+    if ($file) {
+        if (!file_exists($file)) {
             die("File ".$file." could not be opened. Please specify the correct file name. File names are case sensitive.");
         }
     }
-    else
-    {
+    else{
         die(usage());
     }
 }
 
-function usage()
-{
+function usage() {
     return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php distill <inputfile> <1m|3m|12m> [--next=12m]\n\n       Distill orders from the input file.\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
 }
 
-function load_settings()
-{
+function load_settings() {
     $inifile = "sidndomainorder.ini";
     $crypt = new crypt('$NwkP^RC!wHLz7BDT7z$n09Wq4659Lxo');
-    if (file_exists($inifile))
-    {
+    if (file_exists($inifile)) {
         $params = json_decode($crypt->Decrypt(file_get_contents($inifile)));
-        if ($params)
-        {
+        if ($params) {
             if ((strlen($params->username)>0) && (strlen($params->password)>0))
             {
                 return $params;
@@ -190,13 +184,11 @@ function load_settings()
                 die ("User login credentials not found in $inifile file. Please remove the file and re-enter your login credentials\n");
             }
         }
-        else
-        {
+        else {
             die("Decryption of $inifile failed. Please remove the file and re-enter you login credentials\n");
         }
     }
-    else
-    {
+    else {
         echo "Settings file not found, please specify EPP user name and password. User name and password will be stored in a secure file\n";
         echo "Please specify the EPP user name: ";
         $char = fgets(STDIN, 64);
@@ -206,27 +198,23 @@ function load_settings()
         $password = trim($char);
         echo "Connecting to SIDN EPP server with your login credentials...";
         $epp = new epp($username,$password);
-        if ($epp->testconnection())
-        {
+        if ($epp->testconnection()) {
             echo "\nConnection to EPP server successful, saving user credentials in a secure file.\n";
             $params = array('username'=>$username,'password'=>$password);
             $encodedparams = json_encode($params);
             file_put_contents($inifile, $crypt->Crypt($encodedparams));
             return json_decode($encodedparams);
         }
-        else
-        {
+        else {
             echo "\nConnection to EPP service failed, please re-check your login details.\n";
             return null;
         }
     }
 }
 
-function signal_handler($signal)
-{
+function signal_handler($signal) {
     global $epp;
-    switch($signal)
-    {
+    switch($signal) {
         case SIGTERM:
         case SIGKILL:
         case SIGINT:
