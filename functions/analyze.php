@@ -10,34 +10,27 @@ class analyze {
         $this->filename = $filename;
     }
 
-    public function distill($period, $next): void {
-        if ($period) {
-            $period = str_replace('m', '', $period);
-        }
-        if ($next) {
-            $next = str_replace('m', '', $next);
-        }
+    public function distill(): void {
         $lines = file($this->filename, FILE_IGNORE_NEW_LINES);
+        echo "Domainname\tInvoice year\tInvoice month\tRenewal period(m)\tNext renewal period(m)\tDesired year\tDesired month\n";
         foreach ($lines as $line) {
             // Skip the header lines of the report
             if (str_contains($line, 'View orderperiod per domain')) {
-                echo $line."\n";
                 continue;
             }
             if (str_contains($line, 'START ORDERPERIOD')) {
-                echo $line."\n";
                 continue;
             }
-            list (,,$frequency,,$nextperiod) = explode(';', $line);
-            if ($frequency == $period) {
-                if ($next) {
-                    if ($next == $nextperiod) {
-                        echo $line . "\n";
-                    }
-                } else {
-                    echo $line . "\n";
+            list ($domainname,$startperiod,$frequency,,$nextfrequency) = explode(';', $line);
+            if (($frequency=='1') || ($frequency=='3')) {
+                $invoicemonth = date("m",strtotime($startperiod.' +'.$frequency.' months'));
+                $invoiceyear = date("Y",strtotime($startperiod.' +'.$frequency.' months'));
+                if ($nextfrequency == '') {
+                    $nextfrequency = $frequency;
                 }
+                echo "$domainname\t$invoiceyear\t$invoicemonth\t$frequency\t$nextfrequency\n";
             }
+
         }
     }
 
@@ -90,14 +83,13 @@ class analyze {
                 @$invoices[$invoicemonth][$frequency]++;
 
             }
-            // If the last variable is filled, this is a stacked order, these domain names appear twice in the report.
-
             @$frequencycount[$frequency]++;
         }
 
         unset($lines);
+        echo "===========================\n";
         // This array contains all orders counted by number of periods
-        echo "\nProcessed " . count($processed) . " domain names.\n";
+        echo "\nProcessed " . count($processed) . " domain names.\n\n";
         foreach ($frequencycount as $period => $count) {
             $namestring = ($count > 1 ? "names" : "name");
             $periodstring = $period.' month';
@@ -106,10 +98,10 @@ class analyze {
             }
             echo "Found $count domain $namestring with " . $periodstring . " order period.\n";
         }
-        echo "\nFound $stacked domain name" . ($stacked > 1 ? "s" : "") . " with a future order period\n";
-
+        echo "\nFound $stacked domain name" . ($stacked > 1 ? "s" : "") . " where the future order period differs from the current order period\n";
+        echo "\n===========================\n";
         // This list tries to show at what dates you can expect to receive an invoice for the domain names
-        echo "\n\nOverview of ordering periods and invoices\n\n";
+        echo "\nOverview of ordering periods and invoices\n\n";
         $totaltotal = 0;
         foreach ($invoices as $invoicemonth => $count) {
             $invoicedate = date("M Y",strtotime($invoicemonth));
@@ -145,6 +137,7 @@ class analyze {
         $average = number_format($average,2,'.','');
         $totaltotal = number_format($totaltotal,2,'.','');
         echo "Grand total $totaltotal euro per year for ".count($processed)." domain names, averaging $average euro per domain name\n\n";
-        echo "Disclaimer: Amounts for 2026 may differ: SIDN pricing for 2026 is not yet available.\n\n";
+        echo "Disclaimer: Amounts for 2026 may differ: SIDN pricing for 2026 is not yet available.\n";
+        echo "\n===========================\n";
     }
 }

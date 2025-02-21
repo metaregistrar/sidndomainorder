@@ -63,14 +63,11 @@ else {
             break;
 
         case 'distill':
-            if ($argc<4) {
-                die(usage());
-            }
-            if (($argv[3]!='1m') && ($argv[3]!='3m') && ($argv[3]!='12m')) {
+            if ($argc<3) {
                 die(usage());
             }
             $analyze = new analyze($argv[2]);
-            $analyze->distill($argv[3],$next);
+            $analyze->distill();
             break;
 
         case 'set1month':
