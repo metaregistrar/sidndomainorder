@@ -6,7 +6,7 @@ use Metaregistrar\EPP\eppException;
 use Metaregistrar\EPP\eppDomain;
 use Metaregistrar\EPP\sidnEppRenewRequest;
 use Metaregistrar\EPP\eppRenewResponse;
-use Metaregistrar\EPP\eppInfoDomainRequest;
+use Metaregistrar\EPP\sidnEppInfoDomainRequest;
 use Metaregistrar\EPP\sidnEppInfoDomainResponse;
 
 class epp {
@@ -51,10 +51,15 @@ class epp {
 
     public function infoorderperiod($filename): void {
         $this->checkfileexists($filename);
-        $domains = file($filename, FILE_IGNORE_NEW_LINES);
-        foreach ($domains as $domainname) {
+        $lines = file($filename, FILE_IGNORE_NEW_LINES);
+
+        foreach ($lines as $line) {
+            list($domainname) = explode("\t",$line);
+            if ($domainname == 'Domainname') {
+                continue;
+            }
             $period = $this->infodomainperiod($domainname);
-            echo "Next invoice period set for $domainname: $period months\n";
+            echo "Next invoice period found for $domainname: $period months\n";
         }
     }
 
@@ -103,8 +108,9 @@ class epp {
     private function infodomainperiod($domainname): string|null {
         try {
             $domain = new eppDomain($domainname);
-            $info = new eppInfoDomainRequest($domain, 'all');
-            if ((($response = $this->connection->writeandread($info)) instanceof sidnEppInfoDomainResponse) && ($response->Success())) {
+            $info = new sidnEppInfoDomainRequest($domain, 'all');
+            $response = $this->connection->writeandread($info);
+            if (($response instanceof sidnEppInfoDomainResponse) && ($response->Success())) {
                 /* @var $response sidnEppInfoDomainResponse */
                 return $response->getDomainPeriod();
             } else {
