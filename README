@@ -3,16 +3,18 @@ sidndomainorder
 
 (english version below)
 
-Dit script is gemaakt om klanten van SIDN te helpen om de facturatieperiode van hun portfolio van domeinnamen aan te passen
+Dit script is gemaakt om klanten van SIDN te helpen om de facturatieperiode van hun portfolio van domeinnamen in bulk aan te passen
 
 Het script maakt gebruikt van het rapport dat elke maandag van de SIDN site te downloaden is: DOMAIN_ORDER_FREQUENCY.
-Dit rapport bevat alle domeinnamen in het portfolio met hun ordertermijnen.
 
 Snelstart: Download het rapport DOMAIN_ORDER_FREQUENCY van de SIDN registrar website, en start het script met de volgende parameters:
 php sidndomainorder.php analyze DOMAIN_ORDER_FREQUENCYxxxxxx.CSV
 
 Hiermee start u een analyse van het bestand. De analyse geeft aan hoeveel domeinnamen op 1, 3 of 12-maands orderperiode staan, en in welke maanden u facturen kunt verwachten voor welke aantallen domeinnamen en bedragen.
-Ook geeft het script de gestapelde orders weer.
+Ook geeft het script de toekomstig ingestelde ordertermijnen weer.
+
+Daarna kunt u met de functie "distill" een bestand genereren van 1-maands en 3-maands domeinnamen, met de data waarop deze domeinnamen opnieuw worden gefactureerd. Dit bestand kunt u aanvullen met de maanden waarop u graag wilt dat de domeinnamen op 12-maands facturatie worden gezet.
+Gebruik daarna de functie "set12months" om deze wijziging daadwerkelijk uit te voeren. Het script wijzigt alleen die domeinnamen op die maanden die zijn gewenst
 
 Het script heeft een aantal mogelijke parameters:
  - sidndomainorder.php connect: Zorg dat EPP usernaam en EPP wachtwoord in config.php staan en test de EPP connectie
@@ -34,11 +36,15 @@ Als u de EPP connectie die in dit script is opgenomen wilt gebruiken voor uw eig
 sidndomainorder
 ===============
 
-
-This script was made to help SIDN customers to change invoicing period of their portfolio of domain names
+This script was made to help SIDN customers to bulk-change invoicing period of their portfolio of domain names
 
 The script uses the reports DOMAIN_ORDER_FREQUENCY, that can be downloaded every monday from the SIDN website
 This report contains all the domain names in the portfolio along with their invoicing periods
+
+Use the function "distill" to create a comprehensive report on the 1-month and 3-month domain names and when their orderperiods end.
+You can amend this report with the dates YOU want the domain names to be set to 12-month renewal.
+
+This amended report can then be used with the function "set12month" to actually change the order periods of the selected domain names in the months that are desired.
 
 The script uses the following parameters:
 
