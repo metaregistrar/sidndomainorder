@@ -35,7 +35,6 @@ class epp {
             } else {
                 echo "ERROR connecting to SIDN\n";
                 unset($this->connection);
-                return false;
             }
         } catch (eppException $e) {
             echo "ERROR connecting to SIDN: ".$e->getMessage()."\n";
