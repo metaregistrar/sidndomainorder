@@ -4,7 +4,7 @@ include DIRNAME(__FILE__).'/functions/analyze.php';
 // Functions to connect to EPP and view or modify domain order periods
 include DIRNAME(__FILE__).'/functions/epp.php';
 // Contains EPP username and password. DO NOT PUSH TO GIT!!!!
-
+include DIRNAME(__FILE__).'/config.php';
 
 
 // I don't like globals, but the abort handler must be able to close the EPP connection
