@@ -15,7 +15,7 @@ Hiermee start u een analyse van het bestand. De analyse geeft aan hoeveel domein
 Ook geeft het script de gestapelde orders weer.
 
 Het script heeft een aantal mogelijke parameters:
- - sidndomainorder.php connect: Zorg dat EPP usernaam en EPP wachtwoord in sidndomainorder.php staan en test de EPP connectie
+ - sidndomainorder.php connect: Zorg dat EPP usernaam en EPP wachtwoord in config.php staan en test de EPP connectie
 
  - sidndomainorder.php analyze DOMAIN_ORDER_FREQUENCY.CSV: Deze optie leest het bestand DOMAIN_ORDER_FREQUENCY.CSV in en telt hoeveel domeinnamen op 3 maanden, hoeveel op 12 maanden en hoeveel op 1 maandsfacturatie staan.
 
@@ -44,7 +44,7 @@ This report contains all the domain names in the portfolio along with their invo
 
 The script uses the following parameters:
 
- - sidndomainorder.php connect: use this to test your EPP connection. Make sure that EPP username and EPP password are filled in as constants in sidndomainorder.php
+ - sidndomainorder.php connect: use this to test your EPP connection. Make sure that EPP username and EPP password are filled in as constants in config.php
 
  - sidndomainorder.php analyze DOMAIN_ORDER_FREQUENCY.CSV: Reads the report DOMAIN_ORDER_FREQUENCY.CSV and counts how many domain names are on 1, 3 or 12-month order periods.
 
