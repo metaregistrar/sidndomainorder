@@ -12,9 +12,10 @@ use Metaregistrar\EPP\sidnEppInfoDomainResponse;
 class epp {
 
     protected eppConnection $connection;
+    protected $connected = false;
 
     public function __construct($username, $password) {
-        echo "Connecting to SIDN EPP service\n";
+        //echo "Connecting to SIDN EPP service\n";
         try {
             $this->connection = new eppConnection();
             $this->connection->setHostname('ssl://drs.domain-registry.nl');
@@ -26,11 +27,15 @@ class epp {
             if ($this->connection->connect())  {
                 if ($this->connection->login()) {
                     echo "Connection to SIDN EPP is succesful!\n";
+                    $this->connected = true;
                 } else {
+                    echo "ERROR connecting to SIDN\n";
                     unset($this->connection);
                 }
             } else {
+                echo "ERROR connecting to SIDN\n";
                 unset($this->connection);
+                return false;
             }
         } catch (eppException $e) {
             echo "ERROR connecting to SIDN: ".$e->getMessage()."\n";
@@ -38,15 +43,24 @@ class epp {
     }
 
     public function __destruct() {
-        if ($this->connection instanceof eppConnection) {
-            try {
-                $this->connection->logout();
-                $this->connection->disconnect();
-            } catch (eppException $e) {
-                echo "ERROR disconnecting from SIDN: ".$e->getMessage()."\n";
-            }
+        if (isset($this->connection)) {
+            if ($this->connection instanceof eppConnection) {
+                try {
+                    if ($this->connected) {
+                        $this->connected = false;
+                        $this->connection->logout();
+                        $this->connection->disconnect();
+                    }
+                } catch (eppException $e) {
+                    echo "ERROR disconnecting from SIDN: ".$e->getMessage()."\n";
+                }
 
+            }
         }
+    }
+
+    public function connected() {
+        return $this->connected;
     }
 
     public function infoorderperiod($filename): void {
@@ -59,48 +73,41 @@ class epp {
                 continue;
             }
             $period = $this->infodomainperiod($domainname);
-            echo "Next invoice period found for $domainname: $period months\n";
+            echo "Next invoice period for $domainname: $period months\n";
         }
     }
 
-    public function setorderperiods($filename, $period): void {
-        $this->checkfileexists($filename);
-        $reportmonth = ($period == 1 ? "month" : "months");
-        echo "Setting order period to $period $reportmonth for al domain names in file $filename.\n";
-        $linenumber = 0;
-        $domains = file($filename, FILE_IGNORE_NEW_LINES);
-        foreach ($domains as $domain) {
-            $linenumber++;
-            // Skip first 2 lines of the report
-            if (($linenumber > 2) && (strlen($domain) > 1)) {
-                list ($domainname,, $frequency,,) = explode(';', $domain);
-                if ($frequency == $period) {
-                    echo "Domain name $domainname already has a period of $period $reportmonth, skipped this domain name\n";
-                } else {
-                    echo "Setting new period of $period $reportmonth for domain name $domainname\n";
-                    $currentperiod = $this->infodomainperiod($domainname);
-                    if ($currentperiod == $period) {
-                        echo "WARNING: Current period in EPP is already set to $period $reportmonth, downloaded report file may be wrong!\n";
-                    } else {
-                        $this->setdomainperiod($domainname, $period);
-                    }
-
-                }
+    public function setorderperiods($filename): void {
+        $currentmonth = (int) date('m');
+        $currentyear = (int) date('Y');
+        echo "Setting order period to 12 months for specified domain names in file $filename.\nCurrent month is $currentmonth - $currentyear\n\n";
+        $lines = file($filename, FILE_IGNORE_NEW_LINES);
+        foreach ($lines as $line) {
+            list($domainname,$invoiceyear,$invoicemonth,$orderperiod,$nextorderperiod,$wantedinvoiceyear,$wantedinvoicemonth) = explode("\t",$line);
+            if ($domainname == 'Domainname') {
+                continue;
             }
-        }
-    }
-
-
-    public function setsimpleorderperiods($filename, $period): void {
-        $this->checkfileexists($filename);
-        $reportmonth = ($period==1?"month":"months");
-        echo "Setting order period to $period $reportmonth for al domain names in file $filename.\n";
-        //$linenumber = 0;
-        $domains = file($filename, FILE_IGNORE_NEW_LINES);
-        foreach ($domains as $domainname) {
-            echo "Setting new period of $period $reportmonth for domain name $domainname\n";
-            if (!$this->setdomainperiod($domainname, $period)) {
-                echo "ERROR occurred setting order period for domain name $domainname\n";
+            if ($orderperiod == 1) {
+                // For the monthly domains, the desired month must match the current month
+                if (($wantedinvoiceyear==$currentyear) && ($wantedinvoicemonth==$currentmonth)) {
+                    echo "$domainname has an invoice period of $orderperiod and must be changed to 12 months at $wantedinvoicemonth - $wantedinvoiceyear, that is now\n";
+                }
+            } else {
+                $nextperiodmonth = $currentmonth + (int) $orderperiod;
+                $nextperiodyear = $currentyear;
+                if ($nextperiodmonth > 12) {
+                    $nextperiodmonth = 1;
+                    $nextperiodyear += 1;
+                }
+                if (($nextperiodyear==$wantedinvoiceyear) && ($nextperiodmonth > $wantedinvoicemonth)) {
+                    echo "$domainname has an invoice period of $orderperiod months, invoice month will be $invoicemonth - $invoiceyear\n";
+                    echo "$domainname order period must be set to 12 months at $wantedinvoicemonth - $wantedinvoiceyear\n";
+                    if ($this->setdomainperiod($domainname, '12')) {
+                        echo "$domainname order period was changed to 12 months\n";
+                    } else {
+                        echo "ERROR occurred setting order period for domain name $domainname\n";
+                    }
+                }
             }
         }
     }
@@ -130,6 +137,8 @@ class epp {
                 /* @var $response eppRenewResponse */
                 echo $response->getResultMessage()."\n";
                 return true;
+            } else {
+                echo $response->getResultMessage()."\n";
             }
         } catch (eppException $e) {
             echo "RenewDomain failed with message: ".$e->getMessage()."\n";

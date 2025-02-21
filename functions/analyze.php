@@ -51,7 +51,11 @@ class analyze {
             // Skip the header lines of the report
             if (str_contains($line, 'View orderperiod per domain')) {
                 list(,$date) = explode(' till ',$line);
-                $startyear = (int) date("Y",strtotime($date));
+                $difference = (int) (strtotime('today')-strtotime($date))  / 86400;
+                if ($difference > 14) {
+                    echo "file ".$this->filename." has date $date, please use a more recently download file for this analysis\n";
+                    die();
+                }
                 continue;
             }
             if (str_contains($line, 'START ORDERPERIOD')) {
@@ -139,5 +143,36 @@ class analyze {
         echo "Grand total $totaltotal euro per year for ".count($processed)." domain names, averaging $average euro per domain name\n\n";
         echo "Disclaimer: Amounts for 2026 may differ: SIDN pricing for 2026 is not yet available.\n";
         echo "\n===========================\n";
+    }
+
+    public function analyzereportfile() {
+        $lines = file($this->filename,FILE_IGNORE_NEW_LINES);
+        $linecounter = 1;
+        foreach ($lines as $line) {
+            list($domainname,$invoiceyear,$invoicemonth,$orderperiod,$nextorderperiod,$wantedinvoiceyear,$wantedinvoicemonth) = explode("\t",$line);
+            if ($domainname == 'Domainname') {
+                continue;
+            }
+            if (($wantedinvoiceyear < 2025) || ($wantedinvoiceyear>2026)) {
+                $this->showlineerror($this->filename,'Desired invoice year may only be 2025 or 2026', $line, $linecounter);
+            }
+            if (($wantedinvoicemonth<1) || ($wantedinvoicemonth>12)) {
+                $this->showlineerror($this->filename,'Desired invoice month must be between 1 and 12', $line, $linecounter);
+            }
+            if ($wantedinvoiceyear<$invoiceyear) {
+                $this->showlineerror($this->filename,'Desired invoice year cannot be lower than next invoice year', $line, $linecounter);
+            }
+            if (($wantedinvoiceyear==$invoiceyear) && ($wantedinvoicemonth < $invoicemonth)) {
+                $this->showlineerror($this->filename,'Desired invoice month cannot be lower than next invoice month', $line, $linecounter);
+            }
+            $linecounter++;
+        }
+    }
+    private function showlineerror($filename,$errortext,$line, $linenumber) {
+        echo "===============\nError in line $linenumber of $filename:\n";
+        echo "$errortext\nOffending line:";
+        echo "Domainname\tInvoice year\tInvoice month\tOrder period\tNext order period\tDesired invoice year\tDesired invoice month\n";
+        echo "$line\n===============\n";
+        die();
     }
 }

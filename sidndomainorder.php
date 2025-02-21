@@ -4,10 +4,8 @@ include DIRNAME(__FILE__).'/functions/analyze.php';
 // Functions to connect to EPP and view or modify domain order periods
 include DIRNAME(__FILE__).'/functions/epp.php';
 // Contains EPP username and password. DO NOT PUSH TO GIT!!!!
-include DIRNAME(__FILE__).'/myconfig.php';
+include DIRNAME(__FILE__).'/config.php';
 
-
-// I don't like globals, but the abort handler must be able to close the EPP connection
 date_default_timezone_set("UTC");
 
 if (strtoupper(substr(PHP_OS, 0, 3)) !== 'WIN') {
@@ -74,9 +72,16 @@ else {
             if ($argc<3) {
                 die(usage());
             }
+            $analyze = new analyze($argv[2]);
+            // Analyze will die when an error or discrepancy is encountered in this file
+            $analyze->analyzereportfile();
+
+            // Connect to SIDN and fix order periods
             $epp = new epp(EPPUSERNAME,EPPPASSWORD);
-            // Set all domain names in the specified file to 12-month order frequency
-            $epp->setsimpleorderperiods($argv[2],12);
+            if ($epp->connected()) {
+                // Set domain names in the specified file to 12-month order frequency
+                $epp->setorderperiods($argv[2]);
+            }
             break;
 
         default:
@@ -90,16 +95,11 @@ function usage(): string {
 }
 
 function signal_handler($signal): void {
-    global $epp;
     switch($signal) {
         case SIGTERM:
         case SIGKILL:
         case SIGINT:
             print "Program aborted\n";
-            if ($epp) {
-                echo "Closing SIDN EPP connection\n";
-                $epp->forcedisconnect();
-            }
             exit;
     }
 }
