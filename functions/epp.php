@@ -84,8 +84,6 @@ class epp {
     }
 
 
-
-
     public function setsimpleorderperiods($filename, $period): void {
         $this->checkfileexists($filename);
         $reportmonth = ($period==1?"month":"months");
@@ -97,7 +95,6 @@ class epp {
             if (!$this->setdomainperiod($domainname, $period)) {
                 echo "ERROR occurred setting order period for domain name $domainname\n";
             }
-
         }
     }
 
