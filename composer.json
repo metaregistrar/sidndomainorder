@@ -1,0 +1,15 @@
+{
+  "name": "metaregistrar/sidndomainorder",
+  "description": "Update the order period for .NL domain names from 1,3 months to 12 months",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Ewout de Graaf",
+      "email": "ewout@metaregistrar.com"
+    }
+  ],
+  "require": {
+    "metaregistrar/php-epp-client": "dev-master"
+  }
+}
