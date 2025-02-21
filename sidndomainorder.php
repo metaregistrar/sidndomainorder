@@ -26,7 +26,7 @@ else {
     $simplefile = false;
     $next = null;
     foreach ($argv as $arg) {
-        if (substr($arg,0,2)=='--') {
+        if (str_starts_with($arg,'--')) {
             list($subarg,$param)=explode('=',$arg);
             if ($subarg == '--file') {
                 if ($param == 'simple') {
@@ -40,10 +40,10 @@ else {
     }
     switch($argv[1]) {
         case 'connect':
-            if ($params = load_settings()) {
-                echo "Settings succesfully loaded from file\n";
-            }
+            // Test if the connection is valid and works
+            $epp = new epp(EPPUSERNAME,EPPPASSWORD);
             break;
+
         case 'analyze':
             if ($argc<3) {
                 die(usage());
@@ -52,14 +52,16 @@ else {
             $analyze = new analyze($argv[2]);
             $analyze->analyzefile();
             break;
+
         case 'info':
             if ($argc<3) {
                 die(usage());
             }
-            // Info all domain names in the csv file
+            // Info all domain names in a csv file
             $epp = new epp(EPPUSERNAME,EPPPASSWORD);
             $epp->infoorderperiod($argv[2]);
             break;
+
         case 'distill':
             if ($argc<4) {
                 die(usage());
@@ -70,6 +72,7 @@ else {
             $analyze = new analyze($argv[2]);
             $analyze->distill($argv[3],$next);
             break;
+
         case 'set1month':
             if ($argc<3) {
                 die(usage());
@@ -78,6 +81,7 @@ else {
             $epp = new epp(EPPUSERNAME,EPPPASSWORD);
             $epp->setsimpleorderperiods($argv[2],1);
             break;
+
         case 'set3month':
             if ($argc<3) {
                 die(usage());
@@ -95,58 +99,18 @@ else {
             // Set all domain names in the specified file to 12-month order frequency
             $epp->setsimpleorderperiods($argv[2],12);
             break;
+
         default:
             die(usage());
     }
 }
 
 
-function usage() {
+function usage(): string {
     return "Usage: sidndomainorder.php connect\n\n       sidndomainorder.php analyze <inputfile>\n\n       Where inputfile is the SIDN domain order report from the registry website (DOMAIN_ORDER_FREQUENCY).\n\n       sidndomainorder.php distill <inputfile> <1m|3m|12m> [--next=12m]\n\n       Distill orders from the input file.\n\n       sidndomainorder.php info <inputfile>\n       Info all domain name order periods from the domain names on file\n\n       sidndomainorder.php set1month <inputfile> [params]\n       Reset all domain names in the report to 1-month order period\n\n       sidndomainorder.php set3month <inputfile> [params]\n       Reset all domain names in the report to 3-month order period\n\n       sidndomainorder.php set12month <inputfile> [params]\n       Reset all domain names in the report to 12-month order period\n\n       [params]\n       --file=simple\n        Accept a simple list of domain names for the set1month, set3month or set12month functions\n\n";
 }
 
-function load_settings() {
-    $inifile = "sidndomainorder.ini";
-    $crypt = new crypt('$NwkP^RC!wHLz7BDT7z$n09Wq4659Lxo');
-    if (file_exists($inifile)) {
-        $params = json_decode($crypt->Decrypt(file_get_contents($inifile)));
-        if ($params) {
-            if ((strlen($params->username)>0) && (strlen($params->password)>0)) {
-                return $params;
-            }
-            else {
-                die ("User login credentials not found in $inifile file. Please remove the file and re-enter your login credentials\n");
-            }
-        }
-        else {
-            die("Decryption of $inifile failed. Please remove the file and re-enter you login credentials\n");
-        }
-    }
-    else {
-        echo "Settings file not found, please specify EPP user name and password. User name and password will be stored in a secure file\n";
-        echo "Please specify the EPP user name: ";
-        $char = fgets(STDIN, 64);
-        $username = trim($char);
-        echo "Please specify the EPP password: ";
-        $char = fgets(STDIN, 64);
-        $password = trim($char);
-        echo "Connecting to SIDN EPP server with your login credentials...";
-        $epp = new epp($username,$password);
-        if ($epp->testconnection()) {
-            echo "\nConnection to EPP server successful, saving user credentials in a secure file.\n";
-            $params = array('username'=>$username,'password'=>$password);
-            $encodedparams = json_encode($params);
-            file_put_contents($inifile, $crypt->Crypt($encodedparams));
-            return json_decode($encodedparams);
-        }
-        else {
-            echo "\nConnection to EPP service failed, please re-check your login details.\n";
-            return null;
-        }
-    }
-}
-
-function signal_handler($signal) {
+function signal_handler($signal): void {
     global $epp;
     switch($signal) {
         case SIGTERM:
