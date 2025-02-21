@@ -24,7 +24,9 @@ class epp {
             $this->connection->enableDnssec();
             $this->connection->useExtension('sidn-ext-epp-1.0');
             if ($this->connection->connect())  {
-                if (!$this->connection->login()) {
+                if ($this->connection->login()) {
+                    echo "Connection to SIDN EPP is succesful!\n";
+                } else {
                     unset($this->connection);
                 }
             } else {
