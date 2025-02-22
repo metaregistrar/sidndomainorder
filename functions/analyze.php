@@ -1,5 +1,7 @@
 <?php
 
+use JetBrains\PhpStorm\NoReturn;
+
 class analyze {
     protected string $filename = '';
 
@@ -51,7 +53,7 @@ class analyze {
             // Skip the header lines of the report
             if (str_contains($line, 'View orderperiod per domain')) {
                 list(,$date) = explode(' till ',$line);
-                $difference = (int) (strtotime('today')-strtotime($date))  / 86400;
+                $difference = (strtotime('today')-strtotime($date))  / 86400;
                 if ($difference > 14) {
                     echo "file ".$this->filename." has date $date, please use a more recently download file for this analysis\n";
                     die();
@@ -68,6 +70,7 @@ class analyze {
                 // No order frequency known yet for this domain name
                 // What is the order period?
                 $frequency = '12';
+                $startperiod = date("Y-m-01");
             }
             if (isset($processed[$domainname])) {
                 echo "Double domain name alert: $domainname\n";
@@ -83,9 +86,28 @@ class analyze {
                 $processed[$domainname] = $frequency;
                 $startmonth = date("Y-m-01", strtotime($startperiod));
                 @$starts[$startmonth][$nextfrequency]++;
-                $invoicemonth = date("Y-m-01", strtotime($startperiod.'+'.$nextfrequency.' months'));
-                @$invoices[$invoicemonth][$frequency]++;
-
+                switch ($frequency) {
+                    case 1:
+                        for ($i=0; $i<12; $i++) {
+                            $months = (int) $nextfrequency + $i;
+                            $invoicemonth = date("Y-m-01", strtotime($startmonth.'+'.$months.' months'));
+                            @$invoices[$invoicemonth][$frequency]++;
+                        }
+                        break;
+                    case 3:
+                        for ($i=0; $i<12; $i+=4) {
+                            $months = (int) $nextfrequency + $i;
+                            $invoicemonth = date("Y-m-01", strtotime($startmonth.'+'.$months.' months'));
+                            @$invoices[$invoicemonth][$frequency]++;
+                        }
+                        break;
+                    case 12:
+                        $invoicemonth = date("Y-m-01", strtotime($startmonth.'+'.$nextfrequency.' months'));
+                        @$invoices[$invoicemonth][$frequency]++;
+                        break;
+                    default:
+                        die("Unknown frequency $frequency encountered ($domainname)");
+                }
             }
             @$frequencycount[$frequency]++;
         }
@@ -145,11 +167,11 @@ class analyze {
         echo "\n===========================\n";
     }
 
-    public function analyzereportfile() {
+    public function analyzereportfile(): void {
         $lines = file($this->filename,FILE_IGNORE_NEW_LINES);
         $linecounter = 1;
         foreach ($lines as $line) {
-            list($domainname,$invoiceyear,$invoicemonth,$orderperiod,$nextorderperiod,$wantedinvoiceyear,$wantedinvoicemonth) = explode("\t",$line);
+            list($domainname,$invoiceyear,$invoicemonth,,,$wantedinvoiceyear,$wantedinvoicemonth) = explode("\t",$line);
             if ($domainname == 'Domainname') {
                 continue;
             }
@@ -168,7 +190,7 @@ class analyze {
             $linecounter++;
         }
     }
-    private function showlineerror($filename,$errortext,$line, $linenumber) {
+    #[NoReturn] private function showlineerror($filename, $errortext, $line, $linenumber): void {
         echo "===============\nError in line $linenumber of $filename:\n";
         echo "$errortext\nOffending line:";
         echo "Domainname\tInvoice year\tInvoice month\tOrder period\tNext order period\tDesired invoice year\tDesired invoice month\n";
