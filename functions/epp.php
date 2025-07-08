@@ -90,6 +90,11 @@ class epp {
                 // For the monthly domains, the desired month must match the current month
                 if (($wantedinvoiceyear==$currentyear) && ($wantedinvoicemonth==$currentmonth)) {
                     echo "$domainname has an invoice period of $orderperiod and must be changed to 12 months at $wantedinvoicemonth - $wantedinvoiceyear, that is now\n";
+                    if ($this->setdomainperiod($domainname, '12')) {
+                        echo "$domainname order period was changed to 12 months\n";
+                    } else {
+                        echo "ERROR occurred setting order period for domain name $domainname\n";
+                    }
                 }
             } else {
                 $nextperiodmonth = $currentmonth + (int) $orderperiod;
